@@ -8,3 +8,10 @@ pnpm-debug.log*
 # TypeScript
 dist/
 *.tsbuildinfo
+
+# Build artifacts
+*.mcpb
+
+# Misc
+.DS_Store
+.env

@@ -14,17 +14,17 @@ This project is not affiliated with or endorsed by the Federal Department of Jus
 **Company lookup**
 - *"Find if Google has a legal body in Switzerland and show me their registered address."*
 - *"Was ist der vollständige rechtliche Name und die UID des Unternehmens, das als Migros bekannt ist?"*
-- *"Recherche le CHE-116.281.710 et dis-moi tout ce que tu sais à son sujet."*
+- *"Recherche le CHE-169.865.482 et dis-moi tout ce que tu sais à son sujet."*
 
 **Filtering & discovery**
 - *"List all active Treuhand companies headquartered in canton Schaffhausen."*
-- *"Finde Einzelunternehmen im Bereich Malerei (Malergeschäft), die irgendwo in der Grossregion Zürich eingetragen sind."*
+- *"Finde Einzelunternehmen im Bereich Malerei, die irgendwo in der Grossregion Zürich eingetragen sind."*
 - *"Dresse une liste des adresses et des représentants légaux de toutes les banques en Romandie."*
 
 **History & changes**
 - *"What is the new name of the company formerly known as 'SwissAir'?"*
 - *"Zeig mir die vollständige Namens- und Eigentümergeschichte von Credit Suisse."*
-- *"Y a-t-il des entreprises qui ont repris ou fusionné avec Vicafe AG ?"*
+- *"Y a-t-il des entreprises qui ont repris ou fusionné avec UBS AG ?"*
 
 **Due diligence & research**
 - *"Who is listed as auditor for Zurich Insurance Group?"*
@@ -35,13 +35,13 @@ This project is not affiliated with or endorsed by the Federal Department of Jus
 
 - MCP host application (Claude, LLM Studio, VSCode+GHCP/Cline, Cursor, Dive, LibreChat, DeepChat, Chainlit etc.)
 - LLM that supports Tool calling (GPT-4.1+ Claude Sonnet/Opus, Gemini, Llama 3.1+, Qwen3.5, etc.)
-- (optional) [Node.js](https://nodejs.org/) 20 or later (*for development or local run without npx*)
+- (optional) [Node.js](https://nodejs.org/) 24+ (*for development or local run without npx*)
 
 ## Installation
 
 ### As a Claude Desktop Extension (easiest)
 
-1. Go to the [Releases page](../../releases) and download the latest `zefix.mcpb` file.
+1. Go to the [Releases page](https://github.com/zahhar/zefix-mcp/releases) and download the latest `zefix.mcpb` file.
 2. Double-click it — Claude Desktop opens automatically.
 3. Click **Install**.
 
@@ -56,7 +56,7 @@ Add to your MCP host config:
   "mcpServers": {
     "zefix": {
       "command": "npx",
-      "args": ["-y", "@zahhar/zefix-mcp-unofficial"]
+      "args": ["-y", "zefix-mcp-unofficial"]
     }
   }
 }
@@ -116,22 +116,16 @@ Search the Zefix registry. All parameters except `name_or_uid` are optional.
 
 ---
 
-## Development
+## Development and Debugging
 
 ### Build
 
 ```bash
 npm run build
-# Compiled output goes to dist/
+# Compiled output goes to dist/index.js
 ```
 
-### Run locally
-
-```bash
-node dist/index.js
-```
-
-### Debugging & Troubleshooting
+### Inspect
 
 Use the [MCP Inspector](https://github.com/modelcontextprotocol/inspector) to interactively call tools and inspect responses:
 

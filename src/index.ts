@@ -20,6 +20,7 @@ type HttpMethod = "GET" | "POST";
 
 interface SearchResponse {
   list?: CompanySummary[];
+  hasMoreResults?: boolean;
 }
 
 interface CompanySummary {
@@ -247,7 +248,7 @@ async function makeZefixRequest<T>(
   url: string,
   payload: JsonObject | null = null,
   method: HttpMethod = "POST",
-): Promise<T | null> {
+): Promise<{ data: T | null; error: string | null; status: number | null }> {
   const headers: Record<string, string> = {
     "User-Agent": USER_AGENT,
     Accept: "application/json",
@@ -268,12 +269,33 @@ async function makeZefixRequest<T>(
           });
 
     if (!response.ok) {
-      throw new Error(`HTTP error: ${response.status}`);
+      // Return error details
+      return {
+        data: null,
+        error: `HTTP error: ${response.status}`,
+        status: response.status,
+      };
     }
 
-    return (await response.json()) as T;
-  } catch {
-    return null;
+    const json = await response.json();
+    return {
+      data: json as T,
+      error: null,
+      status: response.status,
+    };
+  } catch (err: any) {
+    // Handle timeout or network errors
+    let errorMsg = "";
+    if (err?.name === "AbortError") {
+      errorMsg = "Timeout";
+    } else {
+      errorMsg = err?.message || "Unknown error";
+    }
+    return {
+      data: null,
+      error: errorMsg,
+      status: null,
+    };
   }
 }
 
@@ -331,16 +353,16 @@ function formatCompanyLong(company: CompanyDetails): string {
   return [
     company.name ? `Name: ${company.name}` : null,
     uid ? `UID: ${uid}` : null,
-    legalSeat ? `Legal seat: ${legalSeat}` : null,
     company.status ? `Status: ${company.status}` : null,
-    translation ? `Also known as: ${translation}` : null,
+    legalSeat ? `Legal seat: ${legalSeat}` : null,
+    addressParts.length > 0 ? `Official address: ${addressParts.join(", ")}` : null,
     company.purpose ? `Purpose: ${company.purpose}` : null,
-    addressParts.length > 0 ? `Address: ${addressParts.join(", ")}` : null,
+    translation ? `Also known as: ${translation}` : null,
     oldNameValues.length > 0 ? `Old names: ${oldNameValues.join(", ")}` : null,
     auditFirms,
     hasTakenOver,
     wasTakenOverBy,
-    company.cantonalExcerptWeb ? `Registry: ${company.cantonalExcerptWeb}` : null,
+    company.cantonalExcerptWeb ? `Registry page: ${company.cantonalExcerptWeb}` : null,
   ].filter(Boolean).join("\n");
 }
 
@@ -533,15 +555,37 @@ JU - Jura`,
       payload.legalForms = legalFormIds;
     }
 
-    const result = await makeZefixRequest<SearchResponse>(url, payload, "POST");
+    const hasFilters =
+      (cantons?.length ?? 0) > 0 || (locations?.length ?? 0) > 0 || (legalForms?.length ?? 0) > 0;
+    const noResultsMsg = hasFilters
+      ? "No companies found for this combination of filters. Try relaxing your filter conditions (e.g., remove some cantons, locations, or legal forms) or try with another name/UID."
+      : "No companies found for this name or UID.";
 
-    if (!result || !Array.isArray(result.list)) {
-      return buildResponse(["Cannot connect to zefix.ch"], warnings);
+    const { data: searchData, error: searchError, status: searchStatus } = await makeZefixRequest<SearchResponse>(url, payload, "POST");
+
+    if (searchError) {
+      if (searchStatus === 404) {
+        return buildResponse([noResultsMsg], warnings);
+      }
+      if (
+        searchStatus === 401 ||
+        searchStatus === 403 ||
+        (searchStatus !== null && searchStatus >= 500) ||
+        searchError === "Timeout"
+      ) {
+        return buildResponse(["Cannot connect to zefix.ch"], warnings);
+      }
+      return buildResponse([`Error: ${searchError}`], warnings);
     }
 
-    const companies = result.list;
+    if (!searchData || !Array.isArray(searchData.list)) {
+      return buildResponse(["Unexpected response from zefix.ch. The API may have changed or returned an unsupported format."], warnings);
+    }
+
+    const companies = searchData.list;
+    const hasMoreResults = searchData.hasMoreResults ?? false;
     if (companies.length === 0) {
-      return buildResponse(["No companies found for this name or UID."], warnings);
+      return buildResponse([noResultsMsg], warnings);
     }
 
     if (companies.length === 1) {
@@ -554,7 +598,7 @@ JU - Jura`,
         return buildResponse([formatCompanyShort(company)], warnings);
       }
 
-      const [companyDetails, shabPubs] = await Promise.all([
+      const [{ data: companyDetails }, { data: shabPubs }] = await Promise.all([
         makeZefixRequest<CompanyDetails>(`${API_BASE}/${ehraId}/withoutShabPub.json`, null, "GET"),
         makeZefixRequest<ShabPubEntry[]>(`${API_BASE}/${ehraId}/shabPub.json`, null, "GET"),
       ]);
@@ -569,7 +613,7 @@ JU - Jura`,
           const message = stripHtmlTags(entry.message ?? "");
           return `[${date}] ${message}`;
         });
-        resultText += `\n\n### Schweizerisches Handelsamtsblatt (SHAB) Publications:\n${pubLines.join("\n\n")}`;
+        resultText += `\n\n### Swiss Official Gazette of Commerce (SOGC) Publications:\n${pubLines.join("\n\n")}`;
       }
 
       return buildResponse([resultText], warnings);
@@ -593,7 +637,7 @@ JU - Jura`,
         }
 
         const detailUrl = `${API_BASE}/${ehraId}/withoutShabPub.json`;
-        const companyDetails = await makeZefixRequest<CompanyDetails>(detailUrl, null, "GET");
+        const { data: companyDetails } = await makeZefixRequest<CompanyDetails>(detailUrl, null, "GET");
 
         if (companyDetails) {
           detailedResults.push(formatCompanyLong(companyDetails));
@@ -604,28 +648,29 @@ JU - Jura`,
 
       const header = `Found: ${companies.length} companies`;
       const hint =
-        "---\n" +
-        "Hint: For in-depth data such as names of legal representatives, registered capital, " +
+        "---\nHint:\nOnly summary information is shown. For in-depth data such as names of legal representatives, registered capital, " +
         "and the full history of changes — search again using the UID of the specific company.\n" +
         "---";
       const body = detailedResults.join("\n---\n");
 
-      return buildResponse([header, body, hint], warnings);
+      return buildResponse([header, hint, body], warnings);
     }
 
     const formattedCompanies = companies.map((company) => formatCompanyShort(company));
 
     const header = `Found: ${companies.length} companies`;
     const hint =
-      "---\n" +
-      "Hint: Only general information is shown for results exceeding 10 companies. " +
-      "Use the UID of a specific company, or refine the search by adding Canton, Locality, or Legal Form " +
+      "---\nHint:\n" +
+      (hasMoreResults
+        ? "Zefix data contain more results than displayed. Add more precise filters (canton, locality, or legal form) to narrow down the search.\n"
+        : "") +
+      "Only general information is shown. Use the UID of a specific company " +
       "to obtain the full legal address, names of legal representatives, registered capital, " +
       "mergers and acquisitions, auditor, purpose, and the complete history of changes.\n" +
       "---";
     const body = formattedCompanies.join("\n---\n");
 
-    return buildResponse([header, body, hint], warnings);
+    return buildResponse([header, hint, body], warnings);
   },
 );
 
