@@ -1,6 +1,6 @@
 {
   "name": "zefix-mcp-unofficial",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Company search in Swiss Central Business Name Index (zefix.ch)",
   "license": "MIT",
   "type": "module",

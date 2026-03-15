@@ -2,7 +2,7 @@
   "manifest_version": "0.3",
   "name": "zefix-mcp-unofficial",
   "display_name": "zefix.ch search (Unofficial MCP)",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Company search in Swiss Central Business Name Index",
   "author": {
     "name": "Berg Digital",
