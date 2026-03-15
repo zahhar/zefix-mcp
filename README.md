@@ -150,13 +150,29 @@ Pushing a `v*` tag triggers the GitHub Actions release workflow, which runs two 
 | **Publish Claude plugin** | `npm run build`, `npx @anthropic-ai/mcpb pack`, uploads the `.mcpb` asset | GitHub Releases |
 
 ```bash
-# Bump version in package.json; commit, tag, push.
-# The `manifest.json` at the project root defines the Claude Desktop plugin metadata. Version is synced automatically by CI:
-git add .
-git commit -m "chore: release v0.2.0"
-git tag v0.2.0
+# 1. Bump version in BOTH files (npm will reject publishing over an existing version):
+#    - package.json  → "version": "x.y.z"
+#    - manifest.json → "version": "x.y.z"
+
+# 2. Commit, tag, push — the tag MUST point to the version-bump commit:
+git add package.json manifest.json
+git commit -m "chore: release vX.Y.Z"
+git tag vX.Y.Z
 git push && git push --tags
 ```
+
+> ⚠️ **Common mistake:** creating the tag *before* editing `package.json`/`manifest.json`.
+> CI publishes whatever version string is in `package.json` at the tagged commit — the tag name itself is ignored by npm.
+> If you tagged too early, move the tag to the correct commit:
+> ```bash
+> git tag -d vX.Y.Z                   # delete local tag
+> git push origin :refs/tags/vX.Y.Z   # delete remote tag
+> # edit package.json + manifest.json, then:
+> git add package.json manifest.json
+> git commit -m "chore: release vX.Y.Z"
+> git tag vX.Y.Z
+> git push && git push --tags
+> ```
 
 > **First-time setup (one-off):**
 > - **npm token:** create an *Access token* at npmjs.com → add it as a *Repository secret* named `NPM_TOKEN` in *GitHub → Settings → Secrets and variables → Actions*; token lifetime is 90 days (max) - update regularly.
