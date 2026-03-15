@@ -1,0 +1,306 @@
+[
+    {
+        "id": 1,
+        "name": {
+            "de": "Einzelunternehmen",
+            "fr": "Entreprise individuelle",
+            "it": "Ditta individuale",
+            "en": "Sole proprietorship"
+        },
+        "sort": 100,
+        "kurzform": {
+            "de": "EIU",
+            "fr": "EI",
+            "it": "IPI",
+            "en": "SP"
+        }
+    },
+    {
+        "id": 2,
+        "name": {
+            "de": "Kollektivgesellschaft",
+            "fr": "Société en nom collectif",
+            "it": "Società in nome collettivo",
+            "en": "General Partnership"
+        },
+        "sort": 200,
+        "kurzform": {
+            "de": "KlG",
+            "fr": "SNC",
+            "it": "SNC",
+            "en": "GP"
+        }
+    },
+    {
+        "id": 3,
+        "name": {
+            "de": "Aktiengesellschaft",
+            "fr": "Société anonyme",
+            "it": "Società anonima",
+            "en": "Corporation"
+        },
+        "sort": 300,
+        "kurzform": {
+            "de": "AG",
+            "fr": "SA",
+            "it": "SA",
+            "en": "Ltd"
+        }
+    },
+    {
+        "id": 4,
+        "name": {
+            "de": "Gesellschaft mit beschränkter Haftung",
+            "fr": "Société à responsabilité limitée",
+            "it": "Società a garanzia limitata",
+            "en": "Limited Liability Company"
+        },
+        "sort": 400,
+        "kurzform": {
+            "de": "GmbH",
+            "fr": "Sàrl",
+            "it": "Sagl",
+            "en": "LLC"
+        }
+    },
+    {
+        "id": 5,
+        "name": {
+            "de": "Genossenschaft",
+            "fr": "Société coopérative",
+            "it": "Cooperativa",
+            "en": "Cooperative"
+        },
+        "sort": 500,
+        "kurzform": {
+            "de": "Gen",
+            "fr": "Scoop",
+            "it": "Scoop",
+            "en": "Coop"
+        }
+    },
+    {
+        "id": 6,
+        "name": {
+            "de": "Verein",
+            "fr": "Association",
+            "it": "Associazione",
+            "en": "Association"
+        },
+        "sort": 600,
+        "kurzform": {
+            "de": "Verein",
+            "fr": "Asso",
+            "it": "Asso",
+            "en": "Asso"
+        }
+    },
+    {
+        "id": 7,
+        "name": {
+            "de": "Stiftung",
+            "fr": "Fondation",
+            "it": "Fondazione",
+            "en": "Foundation"
+        },
+        "sort": 700,
+        "kurzform": {
+            "de": "Stift",
+            "fr": "Fond",
+            "it": "Fond",
+            "en": "Found"
+        }
+    },
+    {
+        "id": 8,
+        "name": {
+            "de": "Institut des öffentlichen Rechts",
+            "fr": "Institut de droit public",
+            "it": "Istituto di diritto publico",
+            "en": "Public sector institution"
+        },
+        "sort": 800,
+        "kurzform": {
+            "de": "IOR",
+            "fr": "IDP",
+            "it": "IDP",
+            "en": "PSI"
+        }
+    },
+    {
+        "id": 9,
+        "name": {
+            "de": "Zweigniederlassung",
+            "fr": "Succursale",
+            "it": "Succursale",
+            "en": "Branch"
+        },
+        "sort": 900,
+        "kurzform": {
+            "de": "ZN",
+            "fr": "Succ",
+            "it": "Succ",
+            "en": "Bran"
+        }
+    },
+    {
+        "id": 10,
+        "name": {
+            "de": "Kommanditgesellschaft",
+            "fr": "Société en commandite",
+            "it": "Società in accomandita",
+            "en": "Limited Partnership"
+        },
+        "sort": 1000,
+        "kurzform": {
+            "de": "KmG",
+            "fr": "SCm",
+            "it": "Sac",
+            "en": "LP"
+        }
+    },
+    {
+        "id": 11,
+        "name": {
+            "de": "Zweigniederlassung einer ausl. Gesellschaft",
+            "fr": "Succursale étrangère",
+            "it": "Succursale estera",
+            "en": "Foreign branch"
+        },
+        "sort": 1100,
+        "kurzform": {
+            "de": "ZNA",
+            "fr": "SUCE",
+            "it": "SUCE",
+            "en": "FB"
+        }
+    },
+    {
+        "id": 12,
+        "name": {
+            "de": "Kommanditaktiengesellschaft",
+            "fr": "Société en commandite par actions",
+            "it": "Società in accomandita per azioni",
+            "en": "Corporation with unlimited partners"
+        },
+        "sort": 1200,
+        "kurzform": {
+            "de": "KmAG",
+            "fr": "SCmA",
+            "it": "SAcA",
+            "en": "CUP"
+        }
+    },
+    {
+        "id": 13,
+        "name": {
+            "de": "Besondere Rechtsform",
+            "fr": "Nature juridique particulière",
+            "it": "Natura giuridica particolare",
+            "en": "Special legal form"
+        },
+        "sort": 1300,
+        "kurzform": {
+            "de": "BES",
+            "fr": "PART",
+            "it": "PART",
+            "en": "SPEC"
+        }
+    },
+    {
+        "id": 14,
+        "name": {
+            "de": "Gemeinderschaft",
+            "fr": "Indivision",
+            "it": "Indivisione",
+            "en": "Ownership in undivided shares"
+        },
+        "sort": 1400,
+        "kurzform": {
+            "de": "GEM",
+            "fr": "IND",
+            "it": "IND",
+            "en": "OUS"
+        }
+    },
+    {
+        "id": 15,
+        "name": {
+            "de": "Investmentgesellschaft mit festem Kapital",
+            "fr": "Société d’investissement à capital fixe",
+            "it": "Società di investimento a capitale fisso",
+            "en": "Limited Partnership for collective investment schemes with a fixed capital"
+        },
+        "sort": 1500,
+        "kurzform": {
+            "de": "SICAF",
+            "fr": "SICAF",
+            "it": "SICAF",
+            "en": "SICAF"
+        }
+    },
+    {
+        "id": 16,
+        "name": {
+            "de": "Investmentgesellschaft mit variablem Kapital",
+            "fr": "Société d’investissement à capital variable",
+            "it": "Società di investimento a capitale variabile",
+            "en": "Limited Partnership for collective investment schemes with a variable capital"
+        },
+        "sort": 1600,
+        "kurzform": {
+            "de": "SICAV",
+            "fr": "SICAV",
+            "it": "SICAV",
+            "en": "SICAV"
+        }
+    },
+    {
+        "id": 17,
+        "name": {
+            "de": "Kommanditgesellschaft für kollektive Kapitalanlagen",
+            "fr": "Société en commandite de placements collectifs",
+            "it": "Società in accomandita per investimenti collettivi di capitale",
+            "en": "Limited Partnership for collective investment schemes"
+        },
+        "sort": 1700,
+        "kurzform": {
+            "de": "KmGK",
+            "fr": "SCmPC",
+            "it": "SAcCol",
+            "en": "LPCI"
+        }
+    },
+    {
+        "id": 18,
+        "name": {
+            "de": "Nichtkaufmännische Prokura",
+            "fr": "Procuration non commerciale",
+            "it": "Procura non commerciale",
+            "en": "Non commercial power of attorney"
+        },
+        "sort": 1800,
+        "kurzform": {
+            "de": "NKP",
+            "fr": "PNC",
+            "it": "PNC",
+            "en": "PNC"
+        }
+    },
+    {
+        "id": 0,
+        "name": {
+            "de": "(unbekannt)",
+            "fr": "(inconnu)",
+            "it": "(sconosciuto)",
+            "en": "(unknown)"
+        },
+        "sort": 9999,
+        "kurzform": {
+            "de": "-",
+            "fr": "-",
+            "it": "-",
+            "en": "-"
+        }
+    }
+]

@@ -1,0 +1,24 @@
+{
+  "manifest_version": "0.3",
+  "name": "zefix-mcp-unofficial",
+  "display_name": "zefix.ch search (Unofficial MCP)",
+  "version": "0.1.0",
+  "description": "Company search in Swiss Central Business Name Index",
+  "author": {
+    "name": "Berg Digital",
+    "email": "hallo@bergdigital.ch",
+    "url": "https://bergdigital.ch"
+  },
+  "server": {
+    "type": "node",
+    "entry_point": "dist/index.js",
+    "mcp_config": {
+      "command": "node",
+      "args": [
+        "${__dirname}/dist/index.js"
+      ],
+      "env": {}
+    }
+  },
+  "license": "MIT"
+}

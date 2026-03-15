@@ -1,0 +1,29 @@
+{
+  "name": "zefix-mcp-unofficial",
+  "version": "0.1.0",
+  "description": "Company search in Swiss Central Business Name Index (zefix.ch)",
+  "license": "MIT",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "zefix-mcp-unofficial": "dist/index.js"
+  },
+  "files": [
+    "dist",
+    "dict"
+  ],
+  "keywords": ["mcp", "zefix", "switzerland", "company-search", "modelcontextprotocol"],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/index.js",
+    "prepublishOnly": "npm run build"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.18.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "typescript": "^5.8.2"
+  }
+}
