@@ -2,16 +2,21 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { readFile } from "node:fs/promises";
+import { createRequire } from "node:module";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { z } from "zod";
 
+const { version } = createRequire(import.meta.url)("../package.json") as { version: string };
+
 const API_BASE = "https://www.zefix.ch/ZefixREST/api/v1/firm";
 const USER_AGENT = "zefix-mcp-unofficial";
+const REQUEST_TIMEOUT_MS = 5000;
+const SEQUENTIAL_REQUEST_DELAY_MS = 250;
 
 const server = new McpServer({
   name: "zefix-mcp-unofficial",
-  version: "0.1.0",
+  version,
 });
 
 type JsonObject = Record<string, unknown>;
@@ -257,7 +262,7 @@ async function makeZefixRequest<T>(
   try {
     const response =
       method === "GET"
-        ? await fetch(url, { headers, signal: AbortSignal.timeout(5000) })
+        ? await fetch(url, { headers, signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS) })
         : await fetch(url, {
             method: "POST",
             headers: {
@@ -265,7 +270,7 @@ async function makeZefixRequest<T>(
               "Content-Type": "application/json",
             },
             body: JSON.stringify(payload ?? {}),
-            signal: AbortSignal.timeout(5000),
+            signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
           });
 
     if (!response.ok) {
@@ -567,15 +572,30 @@ JU - Jura`,
       if (searchStatus === 404) {
         return buildResponse([noResultsMsg], warnings);
       }
-      if (
-        searchStatus === 401 ||
-        searchStatus === 403 ||
-        (searchStatus !== null && searchStatus >= 500) ||
-        searchError === "Timeout"
-      ) {
-        return buildResponse(["Cannot connect to zefix.ch"], warnings);
+      if (searchError === "Timeout") {
+        return buildResponse([
+          `Zefix API did not respond within ${REQUEST_TIMEOUT_MS / 1000} seconds. ` +
+          `Try again later. If you are a developer, consider increasing REQUEST_TIMEOUT_MS (currently ${REQUEST_TIMEOUT_MS} ms).`
+        ], warnings);
       }
-      return buildResponse([`Error: ${searchError}`], warnings);
+      if (searchStatus === 401 || searchStatus === 403) {
+        return buildResponse([
+          `Access to Zefix API was denied (HTTP ${searchStatus}). The User-Agent may be blocked by Zefix. ` +
+          `Try again later or contact Zefix. If you are a developer, try changing the USER_AGENT constant (currently "${USER_AGENT}").`
+        ], warnings);
+      }
+      if (searchStatus === 429) {
+        return buildResponse([
+          `Zefix API rate limit exceeded (HTTP 429). Try again after waiting some time. ` +
+          `If you are a developer, consider increasing SEQUENTIAL_REQUEST_DELAY_MS (currently ${SEQUENTIAL_REQUEST_DELAY_MS} ms).`
+        ], warnings);
+      }
+      if (searchStatus !== null && searchStatus >= 500) {
+        return buildResponse([
+          `Zefix API is experiencing an internal error (HTTP ${searchStatus}). Try again later or contact Zefix.`
+        ], warnings);
+      }
+      return buildResponse([`Zefix API error: ${searchError}`], warnings);
     }
 
     if (!searchData || !Array.isArray(searchData.list)) {
@@ -633,7 +653,7 @@ JU - Jura`,
         }
 
         if (index > 0) {
-          await new Promise((resolve) => setTimeout(resolve, 250));
+          await new Promise((resolve) => setTimeout(resolve, SEQUENTIAL_REQUEST_DELAY_MS));
         }
 
         const detailUrl = `${API_BASE}/${ehraId}/withoutShabPub.json`;
