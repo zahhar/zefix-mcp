@@ -1,4 +1,5 @@
 # Zefix MCP
+[![Zefix Search on MCP Marketplace](https://mcp-marketplace.io/api/badge?slug=zefix-search)](https://mcp-marketplace.io/server/zefix-search)
 
 > ⚠️ **Unofficial** MCP server for [zefix.ch – Switzerland Central Business Name Index](https://www.zefix.ch).
 \
