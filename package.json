@@ -1,6 +1,6 @@
 {
   "name": "zefix-mcp-unofficial",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "Company search in Swiss Central Business Name Index (zefix.ch)",
   "license": "MIT",
   "type": "module",
@@ -23,7 +23,23 @@
     "modelcontextprotocol",
     "swiss",
     "business-registry",
-    "search"
+    "search",
+    "mcp",
+    "company-data",
+    "company-search", 
+    "swiss-made", 
+    "business-register", 
+    "swiss-ai", 
+    "search-functionality", 
+    "claude-desktop", 
+    "business-registry", 
+    "claude-extensions", 
+    "mcp-servers", 
+    "mcp-server", 
+    "swiss-open-data", 
+    "claude-plugin", 
+    "swiss-business", 
+    "claude-ecosystem"
   ],
   "scripts": {
     "build": "tsc -p tsconfig.json",
