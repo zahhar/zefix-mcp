@@ -6,6 +6,7 @@ import { createRequire } from "node:module";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { z } from "zod";
+import { stringify as yamlStringify } from "yaml";
 
 const { version } = createRequire(import.meta.url)("../package.json") as { version: string };
 
@@ -309,66 +310,67 @@ function lookupCanton(legalSeatId: number | undefined): string {
   return locationsDictionaryCache.find((e) => e.bfsId === legalSeatId)?.canton ?? "";
 }
 
-function formatCompanyShort(company: CompanySummary): string {
+function buildCompanySummaryOutput(company: CompanySummary): Record<string, unknown> {
   const canton = lookupCanton(company.legalSeatId);
   const legalSeat = [company.legalSeat, canton].filter(Boolean).join(", ");
   const uid = company.uidFormatted ?? company.uid;
-  return [
-    company.name ? `Name: ${company.name}` : null,
-    uid ? `UID: ${uid}` : null,
-    legalSeat ? `Legal seat: ${legalSeat}` : null,
-    company.status ? `Status: ${company.status}` : null,
-    company.cantonalExcerptWeb ? `Registry: ${company.cantonalExcerptWeb}` : null,
-  ].filter(Boolean).join("\n");
+  const out: Record<string, unknown> = {};
+  if (company.name) out.name = company.name;
+  if (uid) out.uid = uid;
+  if (legalSeat) out.legal_seat = legalSeat;
+  if (company.status) out.status = company.status;
+  if (company.cantonalExcerptWeb) out.registry = company.cantonalExcerptWeb;
+  return out;
 }
 
-function formatRelatedCompany(c: CompanySummary): string {
+function buildRelatedCompanyOutput(c: CompanySummary): Record<string, unknown> {
   const canton = lookupCanton(c.legalSeatId);
   const legalSeat = [c.legalSeat, canton].filter(Boolean).join(", ");
-  const parts = [c.name, legalSeat || undefined, c.uidFormatted ?? c.uid].filter(Boolean);
-  return parts.join(", ");
+  const uid = c.uidFormatted ?? c.uid;
+  const out: Record<string, unknown> = {};
+  if (c.name) out.name = c.name;
+  if (legalSeat) out.legal_seat = legalSeat;
+  if (uid) out.uid = uid;
+  return out;
 }
 
-function formatCompanyLong(company: CompanyDetails): string {
-  const addressObj = company.address && typeof company.address === "object" ? company.address : {};
+function buildCompanyDetailOutput(
+  company: CompanyDetails,
+  shabPubs?: ShabPubEntry[] | null,
+): Record<string, unknown> {
+  const canton = lookupCanton(company.legalSeatId);
+  const legalSeat = [company.legalSeat, canton].filter(Boolean).join(", ");
+  const uid = company.uidFormatted ?? company.uid;
 
+  const addressObj = company.address && typeof company.address === "object" ? company.address : {};
   const addressParts = Object.entries(addressObj)
     .filter(([key, value]) => key !== "country" && value !== null && value !== "")
     .map(([, value]) => String(value).trim());
 
-  const canton = lookupCanton(company.legalSeatId);
-  const legalSeat = [company.legalSeat, canton].filter(Boolean).join(", ");
-  const uid = company.uidFormatted ?? company.uid;
-
-  const oldNameValues = (company.oldNames ?? [])
+  const oldNames = (company.oldNames ?? [])
     .map((item) => item.name?.trim())
     .filter((name): name is string => Boolean(name));
 
-  const translation = company.translation?.length ? company.translation.join(", ") : null;
-
-  const toBulletList = (label: string, items: CompanySummary[] | null | undefined): string | null =>
-    items?.length
-      ? `${label}:\n${items.map((c) => `- ${formatRelatedCompany(c)}`).join("\n")}`
-      : null;
-
-  const auditFirms = toBulletList("Auditor", company.auditFirms);
-  const hasTakenOver = toBulletList("Has taken over", company.hasTakenOver);
-  const wasTakenOverBy = toBulletList("Was taken over by", company.wasTakenOverBy);
-
-  return [
-    company.name ? `Name: ${company.name}` : null,
-    uid ? `UID: ${uid}` : null,
-    company.status ? `Status: ${company.status}` : null,
-    legalSeat ? `Legal seat: ${legalSeat}` : null,
-    addressParts.length > 0 ? `Official address: ${addressParts.join(", ")}` : null,
-    company.purpose ? `Purpose: ${company.purpose}` : null,
-    translation ? `Also known as: ${translation}` : null,
-    oldNameValues.length > 0 ? `Old names: ${oldNameValues.join(", ")}` : null,
-    auditFirms,
-    hasTakenOver,
-    wasTakenOverBy,
-    company.cantonalExcerptWeb ? `Registry page: ${company.cantonalExcerptWeb}` : null,
-  ].filter(Boolean).join("\n");
+  const out: Record<string, unknown> = {};
+  if (company.name) out.name = company.name;
+  if (uid) out.uid = uid;
+  if (company.status) out.status = company.status;
+  if (legalSeat) out.legal_seat = legalSeat;
+  if (addressParts.length > 0) out.address = addressParts.join(", ");
+  if (company.purpose) out.purpose = company.purpose;
+  if (company.translation?.length) out.also_known_as = company.translation.join(", ");
+  if (oldNames.length > 0) out.old_names = oldNames;
+  if (company.auditFirms?.length) out.auditor = company.auditFirms.map(buildRelatedCompanyOutput);
+  if (company.hasTakenOver?.length) out.has_taken_over = company.hasTakenOver.map(buildRelatedCompanyOutput);
+  if (company.wasTakenOverBy?.length) out.was_taken_over_by = company.wasTakenOverBy.map(buildRelatedCompanyOutput);
+  if (company.cantonalExcerptWeb) out.registry_page = company.cantonalExcerptWeb;
+  if (shabPubs && shabPubs.length > 0) {
+    out.sogc_publications = shabPubs.map((entry) => ({
+      date: entry.shabDate ?? "Unknown date",
+      message: stripHtmlTags(entry.message ?? ""),
+    }));
+  }
+  return out;
 }
 
 function stripHtmlTags(html: string): string {
@@ -382,13 +384,12 @@ function stripHtmlTags(html: string): string {
     .replace(/&#(\d+);/g, (_, code: string) => String.fromCharCode(Number(code)));
 }
 
-function buildResponse(sections: string[], warnings: string[]) {
-  const allSections =
-    warnings.length > 0
-      ? [...sections, `### WARNINGS\n${warnings.map((w) => `- ${w}`).join("\n")}`]
-      : sections;
+function buildResponse(data: Record<string, unknown>, warnings: string[]) {
+  if (warnings.length > 0) {
+    data.warnings = warnings;
+  }
   return {
-    content: [{ type: "text" as const, text: allSections.join("\n\n") }],
+    content: [{ type: "text" as const, text: yamlStringify(data, { lineWidth: 0 }) }],
   };
 }
 
@@ -480,11 +481,11 @@ JU - Jura`,
     const warnings: string[] = [];
 
     if (!allowedLanguages.has(normalizedLanguage)) {
-      return buildResponse(["Invalid language_key. Allowed ISO-639-1 codes are: en, de, fr, it."], warnings);
+      return buildResponse({ error: "Invalid language_key. Allowed ISO-639-1 codes are: en, de, fr, it." }, warnings);
     }
 
     if (!name_or_uid.trim()) {
-      return buildResponse(["Company name_or_uid must not be empty."], warnings);
+      return buildResponse({ error: "Company name_or_uid must not be empty." }, warnings);
     }
 
     let registryOffices: number[] | undefined;
@@ -570,42 +571,45 @@ JU - Jura`,
 
     if (searchError) {
       if (searchStatus === 404) {
-        return buildResponse([noResultsMsg], warnings);
+        return buildResponse({ result: noResultsMsg }, warnings);
       }
       if (searchError === "Timeout") {
-        return buildResponse([
-          `Zefix API did not respond within ${REQUEST_TIMEOUT_MS / 1000} seconds. ` +
-          `Try again later. If you are a developer, consider increasing REQUEST_TIMEOUT_MS (currently ${REQUEST_TIMEOUT_MS} ms).`
-        ], warnings);
+        return buildResponse({
+          error:
+            `Zefix API did not respond within ${REQUEST_TIMEOUT_MS / 1000} seconds. ` +
+            `Try again later. If you are a developer, consider increasing REQUEST_TIMEOUT_MS (currently ${REQUEST_TIMEOUT_MS} ms).`,
+        }, warnings);
       }
       if (searchStatus === 401 || searchStatus === 403) {
-        return buildResponse([
-          `Access to Zefix API was denied (HTTP ${searchStatus}). The User-Agent may be blocked by Zefix. ` +
-          `Try again later or contact Zefix. If you are a developer, try changing the USER_AGENT constant (currently "${USER_AGENT}").`
-        ], warnings);
+        return buildResponse({
+          error:
+            `Access to Zefix API was denied (HTTP ${searchStatus}). The User-Agent may be blocked by Zefix. ` +
+            `Try again later or contact Zefix. If you are a developer, try changing the USER_AGENT constant (currently "${USER_AGENT}").`,
+        }, warnings);
       }
       if (searchStatus === 429) {
-        return buildResponse([
-          `Zefix API rate limit exceeded (HTTP 429). Try again after waiting some time. ` +
-          `If you are a developer, consider increasing SEQUENTIAL_REQUEST_DELAY_MS (currently ${SEQUENTIAL_REQUEST_DELAY_MS} ms).`
-        ], warnings);
+        return buildResponse({
+          error:
+            `Zefix API rate limit exceeded (HTTP 429). Try again after waiting some time. ` +
+            `If you are a developer, consider increasing SEQUENTIAL_REQUEST_DELAY_MS (currently ${SEQUENTIAL_REQUEST_DELAY_MS} ms).`,
+        }, warnings);
       }
       if (searchStatus !== null && searchStatus >= 500) {
-        return buildResponse([
-          `Zefix API is experiencing an internal error (HTTP ${searchStatus}). Try again later or contact Zefix.`
-        ], warnings);
+        return buildResponse({
+          error: `Zefix API is experiencing an internal error (HTTP ${searchStatus}). Try again later or contact Zefix.`,
+        }, warnings);
       }
-      return buildResponse([`Zefix API error: ${searchError}`], warnings);
+      return buildResponse({ error: `Zefix API error: ${searchError}` }, warnings);
     }
 
     if (!searchData || !Array.isArray(searchData.list)) {
-      return buildResponse(["Unexpected response from zefix.ch. The API may have changed or returned an unsupported format."], warnings);
+      return buildResponse({ error: "Unexpected response from zefix.ch. The API may have changed or returned an unsupported format." }, warnings);
     }
 
     const companies = searchData.list;
     const hasMoreResults = searchData.hasMoreResults ?? false;
     if (companies.length === 0) {
-      return buildResponse([noResultsMsg], warnings);
+      return buildResponse({ result: noResultsMsg }, warnings);
     }
 
     if (companies.length === 1) {
@@ -615,7 +619,7 @@ JU - Jura`,
       const ehraId = String(company.ehraId ?? company.ehraid ?? "").trim();
 
       if (!ehraId) {
-        return buildResponse([formatCompanyShort(company)], warnings);
+        return buildResponse({ company: buildCompanySummaryOutput(company) }, warnings);
       }
 
       const [{ data: companyDetails }, { data: shabPubs }] = await Promise.all([
@@ -623,24 +627,15 @@ JU - Jura`,
         makeZefixRequest<ShabPubEntry[]>(`${API_BASE}/${ehraId}/shabPub.json`, null, "GET"),
       ]);
 
-      let resultText = companyDetails
-        ? formatCompanyLong(companyDetails)
-        : formatCompanyShort(company);
+      const companyOutput = companyDetails
+        ? buildCompanyDetailOutput(companyDetails, shabPubs)
+        : buildCompanySummaryOutput(company);
 
-      if (shabPubs && shabPubs.length > 0) {
-        const pubLines = shabPubs.map((entry) => {
-          const date = entry.shabDate ?? "Unknown date";
-          const message = stripHtmlTags(entry.message ?? "");
-          return `[${date}] ${message}`;
-        });
-        resultText += `\n\n### Swiss Official Gazette of Commerce (SOGC) Publications:\n${pubLines.join("\n\n")}`;
-      }
-
-      return buildResponse([resultText], warnings);
+      return buildResponse({ company: companyOutput }, warnings);
     }
 
     if (companies.length < 11) {
-      const detailedResults: string[] = [];
+      const detailedResults: Record<string, unknown>[] = [];
 
       for (let index = 0; index < companies.length; index += 1) {
         const company = companies[index];
@@ -648,7 +643,7 @@ JU - Jura`,
         const ehraId = String(company.ehraId ?? company.ehraid ?? "").trim();
 
         if (!ehraId) {
-          detailedResults.push(formatCompanyShort(company));
+          detailedResults.push(buildCompanySummaryOutput(company));
           continue;
         }
 
@@ -659,38 +654,30 @@ JU - Jura`,
         const detailUrl = `${API_BASE}/${ehraId}/withoutShabPub.json`;
         const { data: companyDetails } = await makeZefixRequest<CompanyDetails>(detailUrl, null, "GET");
 
-        if (companyDetails) {
-          detailedResults.push(formatCompanyLong(companyDetails));
-        } else {
-          detailedResults.push(formatCompanyShort(company));
-        }
+        detailedResults.push(
+          companyDetails ? buildCompanyDetailOutput(companyDetails) : buildCompanySummaryOutput(company),
+        );
       }
 
-      const header = `Found: ${companies.length} companies`;
-      const hint =
-        "---\nHint:\nOnly summary information is shown. For in-depth data such as names of legal representatives, registered capital, " +
-        "and the full history of changes — search again using the UID of the specific company.\n" +
-        "---";
-      const body = detailedResults.join("\n---\n");
-
-      return buildResponse([header, hint, body], warnings);
+      return buildResponse({
+        found: companies.length,
+        hint: "For in-depth data such as SOGC publications — search again using the UID of the specific company.",
+        companies: detailedResults,
+      }, warnings);
     }
 
-    const formattedCompanies = companies.map((company) => formatCompanyShort(company));
+    const out: Record<string, unknown> = {
+      found: companies.length,
+    };
+    if (hasMoreResults) {
+      out.has_more_results = true;
+      out.hint = "Zefix data contain more results than displayed. Add more precise filters (canton, locality, or legal form) to narrow down the search. Only general information is shown — use the UID of a specific company to obtain full details.";
+    } else {
+      out.hint = "Only general information is shown. Use the UID of a specific company to obtain the full legal address, names of legal representatives, registered capital, mergers and acquisitions, auditor, purpose, and the complete history of changes.";
+    }
+    out.companies = companies.map(buildCompanySummaryOutput);
 
-    const header = `Found: ${companies.length} companies`;
-    const hint =
-      "---\nHint:\n" +
-      (hasMoreResults
-        ? "Zefix data contain more results than displayed. Add more precise filters (canton, locality, or legal form) to narrow down the search.\n"
-        : "") +
-      "Only general information is shown. Use the UID of a specific company " +
-      "to obtain the full legal address, names of legal representatives, registered capital, " +
-      "mergers and acquisitions, auditor, purpose, and the complete history of changes.\n" +
-      "---";
-    const body = formattedCompanies.join("\n---\n");
-
-    return buildResponse([header, hint, body], warnings);
+    return buildResponse(out, warnings);
   },
 );
 

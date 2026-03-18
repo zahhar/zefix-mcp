@@ -107,8 +107,8 @@ Search the Zefix registry. All parameters except `name_or_uid` are optional.
 **Tips:**
 - If you know the UID, use it — it will return the most accurate full-detail result.
 - If `exactSearch: true` returns no results, retry with `exactSearch: false` and `phoneticSearch: true` combination.
-- Results are returned in Markdown, with detail level depending on amount of found companies:
-   - 1 result → full details;
+- Results are returned in YAML format, with detail level depending on amount of found companies:
+   - 1 result → full details including SOGC publication history;
    - 2–10 → detailed summaries, but without full history and list of legal representatives;
    - 11+ → name/UID/status list only.
 - Results are capped at 100 items.
